@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نرم افزار فاکتور لوله پلی اتیلن</title>
+  <link rel="stylesheet" href="invoice.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  
+  <!-- فونت وزیر به صورت محلی -->
+  <style>
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('fonts/Vazirmatn-Regular.woff2') format('woff2');
+      font-weight: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('fonts/Vazirmatn-Bold.woff2') format('woff2');
+      font-weight: bold;
+      font-display: swap;
+    }
+  </style>
+  
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(registration => console.log('ServiceWorker registration successful'))
+          .catch(err => console.log('ServiceWorker registration failed: ', err));
+      });
+    }
+  </script>
+</head>
+<body>
+<div class="app-container">
+  <header class="header">
+    <h1>نرم افزار فاکتور لوله پلی اتیلن</h1>
+    <nav class="navigation">
+      <button class="nav-btn active" data-tab="invoice-form">فاکتور جدید</button>
+      <button class="nav-btn" data-tab="preview">پیش‌نمایش</button>
+      <button class="nav-btn" data-tab="settings">تنظیمات</button>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <!-- فرم فاکتور -->
+    <section id="invoice-form" class="tab-content active">
+      <div class="card">
+        <div class="form-actions top-actions">
+          <button id="clear-form-btn" class="btn danger">پاک کردن فرم</button>
+        </div>
+        
+        <h2 class="section-title">ایجاد فاکتور جدید</h2>
+        
+        <!-- گزینه نوع سند (فاکتور / پیش فاکتور) -->
+        <div class="form-group full-width">
+          <label>نوع سند:</label>
+          <div style="display: flex; gap: 1rem;">
+            <label>
+              <input type="radio" name="docType" value="invoice" checked> فاکتور فروش
+            </label>
+            <label>
+              <input type="radio" name="docType" value="proforma"> پیش‌فاکتور فروش
+            </label>
+          </div>
+        </div>
+        
+        <!-- اطلاعات فاکتور -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="invoiceNumber">شماره فاکتور (اختیاری)</label>
+            <input type="text" id="invoiceNumber" placeholder="شماره فاکتور">
+          </div>
+          <div class="form-group">
+            <label for="invoiceDate">تاریخ</label>
+            <input type="text" id="invoiceDate" placeholder="مثال: ۱۴۰۲/۰۱/۰۱">
+          </div>
+        </div>
+
+        <!-- اطلاعات مشتری -->
+        <div class="section-divider">
+          <h3>اطلاعات مشتری (اختیاری)</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="customerName">نام</label>
+              <input type="text" id="customerName" placeholder="نام مشتری">
+            </div>
+            <div class="form-group">
+              <label for="customerNationalId">شماره ملی</label>
+              <input type="text" id="customerNationalId" placeholder="شماره ملی">
+            </div>
+            <div class="form-group">
+              <label for="customerPhone">تلفن</label>
+              <input type="text" id="customerPhone" placeholder="شماره تلفن">
+            </div>
+            <div class="form-group">
+              <label for="customerAddress">آدرس</label>
+              <input type="text" id="customerAddress" placeholder="آدرس">
+            </div>
+          </div>
+        </div>
+
+        <!-- لیست محصولات -->
+        <div class="section-divider">
+          <h3>لیست کالاها</h3>
+          
+          <div class="add-product-form" id="product-form">
+            <h4>افزودن کالای جدید</h4>
+            <input type="hidden" id="productId">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="productName">نام کالا</label>
+                <input type="text" id="productName" value="لوله پلی اتیلن" placeholder="نام کالا">
+              </div>
+              <div class="form-group">
+                <label for="productSize">سایز <span class="required">*</span></label>
+                <input type="text" id="productSize" placeholder="سایز لوله" required>
+              </div>
+              <div class="form-group">
+                <label for="productPressure">فشار <span class="required">*</span></label>
+                <input type="text" id="productPressure" placeholder="فشار" required>
+              </div>
+              <div class="form-group">
+                <label for="productType">نوع</label>
+                <select id="productType">
+                  <option value="">انتخاب کنید</option>
+                  <option value="PE80">PE80</option>
+                  <option value="PE100">PE100</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="productLength">متراژ</label>
+                <input type="text" id="productLength" placeholder="متراژ">
+              </div>
+              <div class="form-group">
+                <label for="productUnitPrice">قیمت واحد (ریال)</label>
+                <input type="text" id="productUnitPrice" placeholder="قیمت واحد">
+              </div>
+            </div>
+            <button id="add-product-btn" class="btn primary">افزودن کالا</button>
+          </div>
+          
+          <div id="products-table-container">
+            <table id="products-table" class="data-table hidden">
+              <thead>
+                <tr><th>ردیف</th><th>نام کالا</th><th>سایز</th><th>فشار</th><th>نوع</th><th>متراژ</th><th>قیمت واحد (ریال)</th><th>قیمت کل (ریال)</th><th>عملیات</th></tr>
+              </thead>
+              <tbody id="products-list"></tbody>
+            </table>
+            <p id="no-products-message">هیچ کالایی اضافه نشده است.</p>
+          </div>
+        </div>
+
+        <!-- گزینه‌های اضافی -->
+        <div class="section-divider">
+          <h3>گزینه‌های اضافی</h3>
+          <div class="options-container">
+            <div class="checkbox-group">
+              <input type="checkbox" id="includeTax">
+              <label for="includeTax">اعمال مالیات بر ارزش افزوده</label>
+            </div>
+            <div id="tax-rate-container" class="hidden indent">
+              <div class="form-group">
+                <label for="taxRate">درصد مالیات</label>
+                <input type="number" id="taxRate" value="10" placeholder="درصد مالیات">
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="includeDiscount">
+              <label for="includeDiscount">اعمال تخفیف</label>
+            </div>
+            <div id="discount-container" class="hidden indent">
+              <div class="form-group">
+                <label for="discountRate">مبلغ تخفیف (ریال)</label>
+                <input type="text" id="discountRate" value="0" placeholder="مبلغ تخفیف">
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="includeStampSignature">
+              <label for="includeStampSignature">اضافه کردن مهر و امضا</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="includeNotes">
+              <label for="includeNotes">اضافه کردن توضیحات</label>
+            </div>
+            <div id="notes-container" class="hidden indent">
+              <div class="form-group">
+                <label for="invoiceNotes">توضیحات فاکتور</label>
+                <textarea id="invoiceNotes" rows="3" placeholder="توضیحات اضافی فاکتور"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="preview-btn" class="btn primary">پیش‌نمایش و چاپ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- پیش‌نمایش فاکتور -->
+    <section id="preview" class="tab-content">
+      <div class="card">
+        <div class="preview-actions" id="preview-buttons">
+          <button id="back-to-form-btn" class="btn secondary">بازگشت به فرم</button>
+          <button id="print-btn" class="btn primary">چاپ فاکتور</button>
+          <button id="download-pdf-btn" class="btn success">دانلود PDF</button>
+          <button id="download-img-btn" class="btn info">دانلود تصویر</button>
+        </div>
+        <div id="invoice-preview-container" class="invoice-preview-container"></div>
+      </div>
+    </section>
+
+    <!-- تنظیمات -->
+    <section id="settings" class="tab-content">
+      <div class="card">
+        <h2 class="section-title">تنظیمات</h2>
+        
+        <div class="section-divider">
+          <h3>اطلاعات شرکت</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="companyName">نام شرکت</label>
+              <input type="text" id="companyName" placeholder="نام شرکت">
+            </div>
+            <div class="form-group">
+              <label for="companyNationalId">شناسه ملی</label>
+              <input type="text" id="companyNationalId" placeholder="شناسه ملی">
+            </div>
+            <div class="form-group">
+              <label for="companyPhone">تلفن</label>
+              <input type="text" id="companyPhone" placeholder="شماره تلفن">
+            </div>
+            <div class="form-group">
+              <label for="companyAddress">آدرس</label>
+              <textarea id="companyAddress" rows="2" placeholder="آدرس"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="media-upload-grid">
+          <div class="upload-container">
+            <h3>لوگو شرکت</h3>
+            <div class="upload-area" id="logo-upload-area">
+              <div id="logo-preview" class="image-preview hidden"></div>
+              <div id="logo-placeholder" class="upload-placeholder"><p>تصویر لوگو بارگذاری نشده است</p></div>
+              <label class="upload-btn"><span>انتخاب لوگو</span><input type="file" id="company-logo" accept="image/*" class="hidden"></label>
+            </div>
+          </div>
+          <div class="upload-container">
+            <h3>مهر و امضا</h3>
+            <div class="upload-area" id="stamp-upload-area">
+              <div id="stamp-preview" class="image-preview hidden"></div>
+              <div id="stamp-placeholder" class="upload-placeholder"><p>تصویر مهر و امضا بارگذاری نشده است</p></div>
+              <label class="upload-btn"><span>انتخاب مهر و امضا</span><input type="file" id="company-stamp" accept="image/*" class="hidden"></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="save-settings-btn" class="btn primary">ذخیره تنظیمات</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="current-year"></span> نرم افزار فاکتور لوله پلی اتیلن</p>
+  </footer>
+</div>
+
+<!-- کتابخانه‌های محلی -->
+<script src="libs/jspdf.umd.min.js"></script>
+<script src="libs/jspdf.plugin.autotable.min.js"></script>
+<script src="libs/html2canvas.min.js"></script>
+
+<!-- اسکریپت اصلی -->
+<script src="invoice.js"></script>
+</body>
+</html>
